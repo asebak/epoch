@@ -355,7 +355,8 @@ create_contract_(ContractCreateTxGasPrice) ->
 
     ok.
 
-create_contract_upfront_charges(_Cfg) ->
+create_contract_upfront_fee(_Cfg) ->
+    sender_balance_in_create
     todo.
 
 sender_balance_in_create(CreateTxOpts) ->
