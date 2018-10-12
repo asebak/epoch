@@ -16,10 +16,17 @@
         , call_contract_error_value/1
         , call_contract_negative_insufficient_funds/1
         , call_contract_negative/1
+        , call_contract_upfront_fee/1
+        , call_contract_upfront_gas/1
+        , call_contract_upfront_amount/1
         , create_contract/1
         , create_contract_with_gas_price_zero/1
         , create_contract_init_error/1
         , create_contract_negative/1
+        , create_contract_upfront_fee/1
+        , create_contract_upfront_gas/1
+        , create_contract_upfront_amount/1
+        , create_contract_upfront_deposit/1
         , state_tree/1
         , sophia_identity/1
         , sophia_state/1
@@ -111,12 +118,22 @@ groups() ->
                          , create_contract_with_gas_price_zero
                          , create_contract_init_error
                          , create_contract_negative
+                         , {group, create_contract_upfront_charges}
                          , call_contract
                          , call_contract_with_gas_price_zero
                          , call_contract_error_value
                          , call_contract_negative_insufficient_funds
                          , call_contract_negative
+                         , {group, call_contract_upfront_charges}
                          ]}
+    , {create_contract_upfront_charges, [], [ create_contract_upfront_fee
+                                            , create_contract_upfront_gas
+                                            , create_contract_upfront_amount
+                                            , create_contract_upfront_deposit ]}
+    , {call_contract_upfront_charges, [], [ call_contract_upfront_fee
+                                          , call_contract_upfront_gas
+                                          , call_contract_upfront_amount ]}
+
     , {state_tree, [sequence], [ state_tree ]}
     , {sophia,     [sequence], [ sophia_identity,
                                  sophia_state,
@@ -338,6 +355,22 @@ create_contract_(ContractCreateTxGasPrice) ->
 
     ok.
 
+create_contract_upfront_charges(_Cfg) ->
+    todo.
+
+sender_balance_in_create(CreateTxOpts) ->
+    state(aect_test_utils:new_state()),
+    Sender = call(fun new_account/2, [1000000]),
+    Opts = CreateTxOpts#{return_init_call_return_value => {true, _Type=word}},
+    {_, SenderBalInCt} = call(fun create_contract/5, [Sender, upfront_charges, {}, Opts]),
+    SenderBalInCt.
+
+sender_balance_in_call(CallTxOpts) ->
+    state(aect_test_utils:new_state()),
+    Sender = call(fun new_account/2, [1000000]),
+    Ct = call(fun create_contract/4, [Sender, upfront_charges, {}]),
+    _SenderBalInCt = call(fun call_contract/7, [Sender, Ct, sender_balance, word, {}, CallTxOpts]).
+
 sign_and_apply_transaction(Tx, PrivKey, S1) ->
     sign_and_apply_transaction(Tx, PrivKey, S1, 1).
 
@@ -461,6 +494,9 @@ call_contract_(ContractCallTxGasPrice) ->
                  aec_accounts:balance(aect_test_utils:get_account(ContractKey, S4))),
 
     {ok, S4}.
+
+call_contract_upfront_charges(_Cfg) ->
+    todo.
 
 %% Check behaviour of contract call error - especially re value / amount.
 call_contract_error_value(_Cfg) ->
